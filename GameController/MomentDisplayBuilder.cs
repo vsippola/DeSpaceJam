@@ -22,11 +22,17 @@ public class MomentDisplayBuilder
     {
         if (built) return;
 
+        if (moment == null)
+        {
+            built = true;
+            return;
+        }
+
         displayPool = new Dictionary<char, List<GameObject>>();
 
         int x = moment.x;
         int y = moment.y;
-        int z = moment.z;
+        int z = moment.z;        
 
         for (int k = 0; k < z; k++)
         {
@@ -51,7 +57,7 @@ public class MomentDisplayBuilder
         PlaceLemmings(GameBoardCubeDictionary.LEMMING_DEAD, moment.deadLemmings);
         PlaceLemmings(GameBoardCubeDictionary.LEMMING_PHASED, moment.phasedLemmings);
 
-        if (moment.timeTraveler != null) PlaceLemming(GameBoardCubeDictionary.LEMMING, moment.timeTraveler);
+        if (moment.HasTimeTraveler()) PlaceLemming(GameBoardCubeDictionary.LEMMING, moment.timeTraveler);
 
         built = true;
     }
@@ -107,6 +113,7 @@ public class MomentDisplayBuilder
 
     public void SetMoment(LevelMoment moment)
     {
+        if (this.moment == moment) return;
         UnbuildDisplay();
         this.moment = moment;
     }

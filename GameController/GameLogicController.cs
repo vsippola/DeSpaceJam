@@ -11,7 +11,7 @@ public class GameLogicController : MonoBehaviour
 
     public bool updating;
 
-    [Range(0.01f, 10f)]
+    [Range(0f, 10f)]
     public float timeBetweenUpdates;
     private float updateTimer;    
 
@@ -31,13 +31,13 @@ public class GameLogicController : MonoBehaviour
 
         if (updateTimer > 0) return;
 
-        //updateTimer = timeBetweenUpdates;
+        updateTimer = timeBetweenUpdates;
         CheckBuilding();
 	}
 
     private void CheckBuilding()
     {
-        if (!Input.GetKeyDown(KeyCode.N)) return;
+        //if (!Input.GetKeyDown(KeyCode.N)) return;
 
         bool changed = false;
 
@@ -48,10 +48,12 @@ public class GameLogicController : MonoBehaviour
             updating = false;
             return;
         }
+
+        
         LevelMoment nextMoment = prevMoment.DeepCopyLevelMoment();
+        if(prevMoment.terminalBuffer == 0) prevMoment.terminalBuffer++;
 
         nextMoment.Age();
-        nextMoment.RecieveTimeTraveler();
 
         List<Lemming> curLemming = new List<Lemming>();
         //Keep track of saved and dead lemming count
@@ -63,16 +65,18 @@ public class GameLogicController : MonoBehaviour
             changed = true;
         }
         
-
         nextMoment.goal -= lemCounts.x;
-        nextMoment.fail -= lemCounts.y;        
-
-        nextMoment.savedLemmings = new List<Lemming>();
-        nextMoment.deadLemmings = new List<Lemming>();
+        nextMoment.fail -= lemCounts.y;
 
         List<Lemming> movingLemmings = new List<Lemming>();
         movingLemmings.AddRange(nextMoment.lemmings);
         movingLemmings.AddRange(nextMoment.phasedLemmings);
+
+        nextMoment.savedLemmings = new List<Lemming>();
+        nextMoment.deadLemmings = new List<Lemming>();
+        nextMoment.phasedLemmings = new List<Lemming>();
+
+        
 
         foreach (Lemming lem in movingLemmings)
         {
@@ -85,21 +89,21 @@ public class GameLogicController : MonoBehaviour
             GameBlock move = null;
             GameBlock below = null;
             
-            current = GetBlock(nextMoment, pos);
+            current = GetBlock(prevMoment, pos);
 
             changed |= true;
 
-
-            move = GetMoveBlock(nextMoment, forwardIndex, belowIndex);
-            below = GetBlock(nextMoment, belowIndex);
+            move = GetMoveBlock(prevMoment, forwardIndex, belowIndex);
+            below = GetBlock(prevMoment, belowIndex);
             
             if(move != null) move.enterMoveBehaviour.Move(nextMoment, lem, move);
             if(below != null) below.overMoveBehaviour.Move(nextMoment, lem, below);
             current.exitMoveBehaviour.Move(nextMoment, lem, below);
 
-            GameBlock onBlock = GetBlock(nextMoment, lem.position);
+            Vector3Int lPos = lem.position; ;
+            char key = nextMoment.level[lPos.x, lPos.y, lPos.z];
          
-            if (onBlock.key == GameBoardCubeDictionary.END_ZONE)
+            if (key == GameBoardCubeDictionary.END_ZONE)
             {
                 //Time travelers don't go to heaven
                 if (nextMoment.LemmingInPhase(lem)) nextMoment.savedLemmings.Add(lem);
@@ -116,22 +120,25 @@ public class GameLogicController : MonoBehaviour
 
         }
 
-        Debug.Log(levelData.moments.Count);
-
         if(changed)
         {
             nextMoment.lemmings = curLemming;
-            if (nextMoment.timeTraveler != null) nextMoment.lemmings.Remove(nextMoment.timeTraveler);
+            if (nextMoment.HasTimeTraveler()) nextMoment.lemmings.Remove(nextMoment.timeTraveler);
+           
         }
 
+        nextMoment.RecieveTimeTraveler();
+
+        LevelData.Instance.CheckPast(nextMoment);
+
         //If a new moment was created, add it to the timeline, call event
-        
+
         if ((MomentBuiltEvent != null))
         {
             List<LevelMoment> timeline = levelData.moments[nextMoment.phase];
-            int i = timeline.Count;
+            Vector2Int i = new Vector2Int(nextMoment.phase, nextMoment.time);
             timeline.Add(nextMoment);
-            MomentBuiltEvent(new Vector2Int(0,i));
+            MomentBuiltEvent(i);
         }
     }
 

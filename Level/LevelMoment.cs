@@ -53,9 +53,9 @@ public class LevelMoment
     public int fail;
     public int phase, time;
 
-    public Lemming timeTraveler = null;
+    public Lemming timeTraveler = new Lemming();
 
-    private int terminalBuffer = 1;
+    public int terminalBuffer = 3;
 
     public void BuildLevel()
     {
@@ -127,12 +127,13 @@ public class LevelMoment
             time = this.time,
             phase = this.phase,
             terminalBuffer = this.terminalBuffer,
-
+            wormholeOutPos = this.wormholeOutPos,
             //Shallow copy, but of type char. So the same as a deep copy. Change if switched to pointers please.
             level = (char[,,])this.level.Clone()
+
         };
 
-        foreach(char key in moveables.Keys)
+        foreach (char key in moveables.Keys)
         {
             copy.moveables.Add(key, this.moveables[key]);
         }
@@ -203,11 +204,6 @@ public class LevelMoment
 
     public char CharAt(Vector3Int i)
     {
-        //First check if the space is a free on the game board
-        char result = level[i.x, i.y, i.z];
-
-        if (result != GameBoardCubeDictionary.OPEN_SPACE) return result;
-
         foreach (Lemming lem in lemmings)
         {
             if (i == lem.position)
@@ -223,10 +219,8 @@ public class LevelMoment
                 return GameBoardCubeDictionary.LEMMING_PHASED;
             }
         }
-
-        //Check Spawners
-
-        return GameBoardCubeDictionary.OPEN_SPACE;
+        
+        return level[i.x, i.y, i.z];
     }
 
     public bool IsFree(Vector3Int i)
@@ -274,13 +268,18 @@ public class LevelMoment
 
     private void WormHole(Lemming lem)
     {
-        //IF something is blocking the exit the lemming dies.
-        if (!IsFree(wormholeOutPos)) return;
+        
+        if (wormholeOutPos.x < 0) return;
 
-        Lemming newLemming = lem.DeepCopy();  
+        //IF something is blocking the exit the lemming dies.
+
+        if (CharAt(wormholeOutPos) != GameBoardCubeDictionary.WORMHOLE_OUT) return;
+
+        Lemming newLemming = lem.DeepCopy();
 
         //Flip directions
-        lem.direction *= -1;
+        newLemming.direction *= -1;
+        newLemming.position = wormholeOutPos;
 
         phasedLemmings.Add(newLemming);
     }
@@ -290,18 +289,26 @@ public class LevelMoment
         return (lem.phase == this.phase);
     }
 
-    public void RecieveTimeTraveler()
+    public void PhaseInLemmings()
     {
+        foreach(Lemming lem in lemmings)
+        {
+            lem.phase = this.phase;
+        }
+    }
+
+    public void RecieveTimeTraveler()
+    {        
         if (phase == 0) return;
 
         List<LevelMoment> prevTimeline = LevelData.Instance.moments[phase - 1];
 
-        //Check if there can be a time travelr.
+        //Check if there can be a time traveler.
         if ((prevTimeline.Count - time) < 3) return;
 
         LevelMoment wormHole = prevTimeline[time + 2];
-
-        if (wormHole.timeTraveler == null) return;
+        
+        if (!wormHole.HasTimeTraveler()) return;
 
         WormHole(wormHole.timeTraveler);
     }
@@ -317,6 +324,11 @@ public class LevelMoment
         }
 
         return false;
+    }
+
+    public bool HasTimeTraveler()
+    {
+        return (timeTraveler.position.x >= 0);
     }
 }
 

@@ -9,30 +9,32 @@ public class RemoveItemController : MonoBehaviour
     public GameLogicController logicController;
     public MomentDisplay momDisplay;
     public HudController hudControl;
-
-    public Color highlight;
+    public GameObject highlightObject;
 
     char key;
     Ray ray;
     RaycastHit hit;
 
-    public Color oldColor;
-    Transform oldTrans;
-
-    Transform overTrans;
     Vector3Int overI;
 
     float startUpDelay = 0f;
 
-    void Start()
+    GameObject highlight;
+    Transform displayTrans;
+
+    private void Start()
     {
-        overTrans = null;
+        ResetOverI();
+        highlight = Instantiate(highlightObject);
+        displayTrans = highlight.transform;
     }
 
     void Update()
     {
+
         startUpDelay -= Time.deltaTime;
         if (startUpDelay > 0) return;
+        
 
         CheckDisplayUpdate();
         CheckPlacement();
@@ -49,7 +51,7 @@ public class RemoveItemController : MonoBehaviour
         if (Input.GetButtonDown("Fire1"))
         {
             //If the object is active, place it
-            if (oldTrans != null)
+            if (overI.x >= 0)
             {
                 RemoveObject();
             }
@@ -83,9 +85,8 @@ public class RemoveItemController : MonoBehaviour
             if (IsRemoveable(key))
             {
                 overI = j;
-                overTrans = t;
 
-                Highlight();
+                Highlight(t);
             }
             else
             {
@@ -98,34 +99,26 @@ public class RemoveItemController : MonoBehaviour
         }
     }
 
-    private void Highlight()
+    private void Highlight(Transform t)
     {
-        if (overTrans == null) return;
-        if (overTrans == oldTrans) return;
-        UnHighlight();
+        if (overI.x < 0) return;
+        Vector2Int i = momDisplay.displayCenter;
+        Transform centerDisplay = momDisplay.displays[i.x][i.y].transform;
 
-        Renderer rend = overTrans.GetComponentInChildren<Renderer>();
+        displayTrans.position = t.position;
+        displayTrans.eulerAngles = t.eulerAngles;
 
-        if (rend == null) return;
+        DisplayData data = centerDisplay.GetComponentInChildren<DisplayData>();
 
-        oldColor = rend.material.color;
-        oldTrans = overTrans;
+        displayTrans.parent = data.centeringTransform;
+        highlight.SetActive(true);
 
-        rend.material.color = highlight;
     }
 
     private void UnHighlight()
     {
-        if (oldTrans == null) return;
-
-        Renderer rend = oldTrans.GetComponent<Renderer>();
-        oldTrans = null;
-
-        if (rend == null) return;
-
-        rend.material.color = oldColor;
-
-        overTrans = null;
+        highlight.SetActive(false);
+        ResetOverI();
     }
 
     private bool IsRemoveable(char key)
@@ -138,13 +131,13 @@ public class RemoveItemController : MonoBehaviour
 
     private void DisableController()
     {
-        overTrans = null;
+        UnHighlight();
         this.enabled = false;
     }
 
     private void RemoveObject()
     {
-        if (oldTrans == null) return;
+        if(overI.x < 0) return;
 
         LevelMoment moment = momDisplay.GetFocusedMoment();
         bool changed = moment.Remove(overI, key);
@@ -152,8 +145,20 @@ public class RemoveItemController : MonoBehaviour
         if (!changed) return;
 
         LevelData.Instance.ChangeFuture(moment);
-        logicController.updating = true;
+        
         momDisplay.UpdateTimeline(moment);
         hudControl.RedrawHud(moment);
+        logicController.updating = true;
+    }
+
+    public void Disable()
+    {
+        UnHighlight();
+        this.enabled = false;
+    }
+
+    private void ResetOverI()
+    {
+        overI = new Vector3Int(-1, 0, 0);
     }
 }

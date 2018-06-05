@@ -60,6 +60,7 @@ public class GameObjectPooler : MonoBehaviour
         obj.transform.position = new Vector3(0f, 0f, 0f);
         obj.transform.rotation = Quaternion.identity;
         obj.transform.parent = parent;
+        obj.layer = LayerMask.NameToLayer("Default");
         obj.SetActive(false);
 
         gameObjectMap[key].queue.Enqueue(obj);

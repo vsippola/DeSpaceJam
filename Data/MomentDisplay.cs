@@ -81,13 +81,9 @@ public class MomentDisplay : MonoBehaviour
             //unbuild current display
             data.builder.UnbuildDisplay();
 
-            if ((momentIndex < 0) || (levelData.moments.Count <= momentIndex)) continue;
-
             int k = centerIndex.x - displayCenter.x + j;
 
-            if ((k < 0) || (levelData.moments[0].Count <= k)) continue;
-
-            data.builder.SetMoment(levelData.moments[momentIndex][k]);
+            data.builder.SetMoment(levelData.GetMoment(momentIndex, k));
             data.builder.BuildDisplay();
         }
     }
@@ -106,9 +102,9 @@ public class MomentDisplay : MonoBehaviour
 
             int k = centerIndex.y - displayCenter.y + j;
 
-            if ((k < 0) || (levelData.moments.Count <= k)) continue;
+            if ((k < 0) || (levelData.moments.Count <= k)) continue;            
 
-            data.builder.SetMoment(levelData.moments[k][momentIndex]);
+            data.builder.SetMoment(levelData.GetMoment(k, momentIndex));
             data.builder.BuildDisplay();
         }
     }
@@ -141,7 +137,7 @@ public class MomentDisplay : MonoBehaviour
     }
 
     public void OnMomentBuildEvent(Vector2Int i)
-    {
+    {      
         Vector2Int j = new Vector2Int (i.y, i.x);
 
         //Center new index
@@ -150,13 +146,18 @@ public class MomentDisplay : MonoBehaviour
         //adjust to display
         j += displayCenter;
 
-        if((0 < j.x) && (j.x < displaysWide) && (0 < j.y) && (j.y < displaysAcross))
+       
+
+        if ((0 < j.x) && (j.x < displaysWide) && (0 < j.y) && (j.y < displaysAcross))
         {
+            //Debug.Log(j);
+
             GameObject display = displays[j.y][j.x];
             DisplayData data = display.GetComponentInChildren<DisplayData>();
 
             data.builder.SetMoment(levelData.moments[i.x][i.y]);
             data.builder.BuildDisplay();
+            
         }       
     }
 
@@ -242,9 +243,16 @@ public class MomentDisplay : MonoBehaviour
         Vector2Int i = MomentIToVectorI(momentIndex);
 
         //If the row changed is in the current display
-        if (!InDisplayRow(i)) return;
+        int phase = moment.phase;
+        while (true)
+        {
+            if (!InDisplayColumn(i)) return;
 
-        RebuildRow(i.x, moment.phase);
+            RebuildRow(i.x, phase);
+            i.x++;
+            phase++;
+        }
+        
 
     }
 

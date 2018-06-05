@@ -6,10 +6,10 @@ using UnityEngine;
 [Serializable]
 public class Lemming
 {
-    public Vector3Int direction = new Vector3Int(1, 0, 0);
-    public Vector3Int position = new Vector3Int(0, 0, 0);
-    public int phase = 0;
-    public int age = 3;  
+    public Vector3Int direction;
+    public Vector3Int position = new Vector3Int(-1, 0, 0);
+    public int phase;
+    public int age;  
 
     //Turns to the left
     public void Turn()

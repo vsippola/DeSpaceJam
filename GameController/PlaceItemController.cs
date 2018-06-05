@@ -63,6 +63,8 @@ public class PlaceItemController : MonoBehaviour
             {
                 DisableController();
             }
+
+            removeItemController.enabled = true;
         }
     }
 
@@ -92,11 +94,11 @@ public class PlaceItemController : MonoBehaviour
 
             displayTrans.position = t.position + Vector3.up;
             displayTrans.eulerAngles = t.eulerAngles;
-            tempObj.SetActive(true);
-
+            
             DisplayData data = centerDisplay.GetComponentInChildren<DisplayData>();
 
             displayTrans.parent = data.centeringTransform;
+            tempObj.SetActive(true);
 
         }
         else
@@ -120,8 +122,7 @@ public class PlaceItemController : MonoBehaviour
             LevelData.Instance.ChangeFuture(moment);
             logicController.updating = true;
             momDisplay.UpdateTimeline(moment);
-            hudControl.RedrawHud(moment);
-            removeItemController.enabled = true;
+            hudControl.RedrawHud(moment);            
         }
 
         DisableController();

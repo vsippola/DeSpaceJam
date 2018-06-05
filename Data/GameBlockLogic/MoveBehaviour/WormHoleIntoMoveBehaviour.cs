@@ -13,6 +13,8 @@ class WormHoleIntoMoveBehaviour : MoveBehaviour
 
         LevelData.Instance.WormHole(data);
         data.timeTraveler = lemming;
+        data.lemmings.Remove(lemming);
+        data.fail--;
     }
 }
 
