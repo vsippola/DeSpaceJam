@@ -16,7 +16,7 @@ public class DeadCountUpdater : MonoBehaviour
     public void OnUpdate(LevelMoment moment)
     {
         text.text = "";
-        if (moment.lemmingCount.y > 0) text.text += moment.lemmingCount.y;
+       // if (moment.lemmingCount.y > 0) text.text += moment.lemmingCount.y;
     }
 
 }

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 public class LevelLoadFromFile
 {
-    private static string gameDataProjectFilePath = "/_Data/LevelData/";
+    private static string gameDataProjectFilePath = "/StreamingAssets/LevelData/";
 
     public static LevelMoment LoadFromFile(string file)
     {

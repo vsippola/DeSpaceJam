@@ -20,7 +20,6 @@ public class DisplayData : MonoBehaviour
     {       
         targetTranslation = Vector3.zero;
 
-        targetRotation = transform.rotation.eulerAngles.y;
         targetRotation = 0f;
 
         translating = false;

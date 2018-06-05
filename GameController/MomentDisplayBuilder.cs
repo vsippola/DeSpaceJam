@@ -46,33 +46,41 @@ public class MomentDisplayBuilder
             }
         }
 
-        PlaceLemming(GameBoardCubeDictionary.LEMMING, moment.lemmings);
-        PlaceLemming(GameBoardCubeDictionary.LEMMING_LIVE, moment.savedLemmings);
-        PlaceLemming(GameBoardCubeDictionary.LEMMING_DEAD, moment.deadLemmings);
+        PlaceLemmings(GameBoardCubeDictionary.LEMMING, moment.lemmings);
+        PlaceLemmings(GameBoardCubeDictionary.LEMMING_LIVE, moment.savedLemmings);
+        PlaceLemmings(GameBoardCubeDictionary.LEMMING_DEAD, moment.deadLemmings);
+        PlaceLemmings(GameBoardCubeDictionary.LEMMING_PHASED, moment.phasedLemmings);
+
+        if (moment.timeTraveler != null) PlaceLemming(GameBoardCubeDictionary.LEMMING, moment.timeTraveler);
 
         built = true;
     }
 
-    private void PlaceLemming(char key, List<Lemming> lemmings)
+    private void PlaceLemming(char key, Lemming lem)
+    {
+        GameObject newObject = GetObject(key);
+
+        if (newObject == null) return;
+
+        Vector3Int pos = lem.position;
+        newObject.SetActive(true);
+
+        newObject.transform.localPosition = new Vector3(pos.x, pos.y, pos.z);
+
+        Vector3 angles = new Vector3(0f, 90f, 0f);
+        float turn = 0f;
+        if (lem.direction.z == -1) turn = 1;
+        else if (lem.direction.x == -1) turn = 2;
+        else if (lem.direction.z == 1) turn = 3;
+
+        newObject.transform.localEulerAngles = angles * turn;
+    }
+
+    private void PlaceLemmings(char key, List<Lemming> lemmings)
     {
         foreach (Lemming lem in lemmings)
         {
-            GameObject newObject = GetObject(key);
-
-            if (newObject == null) continue;
-
-            Vector3Int pos = lem.position;
-            newObject.SetActive(true);
-
-            newObject.transform.localPosition = new Vector3(pos.x, pos.y, pos.z);
-
-            Vector3 angles = new Vector3(0f, 90f, 0f);
-            float turn = 0f;
-            if (lem.direction.z == 1) turn = 1;
-            else if (lem.direction.x == -1) turn = 2;
-            else if (lem.direction.z == -1) turn = 3;
-
-            newObject.transform.localEulerAngles = angles * turn;
+            PlaceLemming(key, lem);
         }
     }
 

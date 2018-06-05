@@ -21,7 +21,7 @@ public class MomentDisplay : MonoBehaviour
     public Vector2Int centerIndex = Vector2Int.zero;
 
     private LevelData levelData;
-    private Vector2Int displayCenter;
+    public Vector2Int displayCenter;
 
     private void Awake()
     {
@@ -94,7 +94,6 @@ public class MomentDisplay : MonoBehaviour
 
     private void RebuildColumn(int columnIndex, int momentIndex)
     {       
-
         for (int j = 0; j < displaysAcross; j++)
         {
             GameObject display = displays[j][columnIndex];
@@ -158,7 +157,7 @@ public class MomentDisplay : MonoBehaviour
 
             data.builder.SetMoment(levelData.moments[i.x][i.y]);
             data.builder.BuildDisplay();
-        }
+        }       
     }
 
     private void CreateDisplayObjects()
@@ -229,4 +228,52 @@ public class MomentDisplay : MonoBehaviour
         container.localPosition -= new Vector3(moment.x / 2f, moment.y / 2f, moment.z / 2f);
     }
 
+    public LevelMoment GetFocusedMoment()
+    {
+        Vector2Int i = centerIndex;
+        return levelData.moments[i.y][i.x];
+    }
+
+    public void UpdateTimeline(LevelMoment moment)
+    {
+        //Get display coordinates.
+        Vector2Int momentIndex = moment.GetIndex();
+
+        Vector2Int i = MomentIToVectorI(momentIndex);
+
+        //If the row changed is in the current display
+        if (!InDisplayRow(i)) return;
+
+        RebuildRow(i.x, moment.phase);
+
+    }
+
+    private bool InDisplayBounds(Vector2Int i)
+    {
+        return InDisplayColumn(i) && InDisplayRow(i);
+        
+    }
+
+    private bool InDisplayColumn(Vector2Int i)
+    {
+        return (0 <= i.x) && (i.x < displaysAcross);
+    }
+
+    private bool InDisplayRow(Vector2Int i)
+    {
+        return (0 <= i.y) && (i.y < displaysWide);
+    }
+
+    private Vector2Int MomentIToVectorI(Vector2Int i)
+    {
+        Vector2Int j = new Vector2Int(i.y, i.x);
+
+        //Center new index
+        j -= centerIndex;
+
+        //adjust to display
+        j += displayCenter;
+
+        return j;
+    }
 }

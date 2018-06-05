@@ -28,6 +28,22 @@ class GameBlockBuilder
                 {
                     return new BlockedIntoMoveBehaviour();
                 }
+            case GameBoardCubeDictionary.MOVE_CUBE:
+                {
+                    return new BlockedIntoMoveBehaviour();
+                }
+            case GameBoardCubeDictionary.LEMMING:
+                {
+                    return new BlockedIntoMoveBehaviour();
+                }
+            case GameBoardCubeDictionary.LEMMING_PHASED:
+                {
+                    return new BlockedIntoMoveBehaviour();
+                }
+            case GameBoardCubeDictionary.WORMHOLE_IN:
+                {
+                    return new WormHoleIntoMoveBehaviour();
+                }
             default:
                 {
                     return new IntoMoveBehaviour();

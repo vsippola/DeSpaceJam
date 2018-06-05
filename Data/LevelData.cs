@@ -41,7 +41,39 @@ public class LevelData
                 
             }
             return instance;
+        }      
+    }
+
+    public void ChangeFuture(LevelMoment moment)
+    {
+        Vector2Int i = new Vector2Int(moment.phase, moment.time);
+
+        List<LevelMoment> timeline = new List<LevelMoment>();
+        for(int j = 0; j <= i.y; j++)
+        {
+            timeline.Add(moments[i.x][j]);
         }
-        
+
+        moments[i.x] = timeline;
+    }
+
+    public void WormHole(LevelMoment moment)
+    {
+        Vector2Int i = moment.GetIndex();
+
+        if (moments.Count < (i.x + 2) )
+        {
+            List<LevelMoment> timeline = new List<LevelMoment>();
+            List<LevelMoment> prevTimeline = moments[i.x];
+
+            LevelMoment prevStart = LevelData.Instance.startingMoment;
+            LevelMoment newStart = prevStart.DeepCopyLevelMoment();
+
+            newStart.phase++;
+            newStart.RecieveTimeTraveler();
+            timeline.Add(newStart);
+
+            moments.Add(timeline);
+        }
     }
 }

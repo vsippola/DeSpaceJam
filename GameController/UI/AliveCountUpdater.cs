@@ -13,10 +13,15 @@ public class AliveCountUpdater : MonoBehaviour
         text.text = "";
     }
 
+    private void Start()
+    {
+        text.text += LevelData.Instance.startingMoment.goal;
+    }
+
     public void OnUpdate(LevelMoment moment)
     {
         text.text = "";
-        if (moment.lemmingCount.x > 0) text.text += moment.lemmingCount.x;
+        if (moment.goal > 0) text.text += moment.goal;
     }
 
 }

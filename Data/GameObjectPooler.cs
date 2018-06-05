@@ -12,10 +12,14 @@ public class GameObjectPooler : MonoBehaviour
     //Gameobjects
     public Transform parent;
     public GameObject normalCube;
+    public GameObject moveCube;
     public GameObject ending;
     public GameObject lemming;
     public GameObject lemmingLive;
     public GameObject lemmingDead;
+    public GameObject lemmingPhased;
+    public GameObject wormholeIn;
+    public GameObject wormholeOut;
 
     private static Dictionary<char, GameObjectQueue> gameObjectMap;    
 
@@ -23,11 +27,16 @@ public class GameObjectPooler : MonoBehaviour
     {
         gameObjectMap = new Dictionary<char, GameObjectQueue>();
         
-        Initialize(GameBoardCubeDictionary.NORMAL_CUBE, normalCube);
+        Initialize(GameBoardCubeDictionary.NORMAL_CUBE, normalCube);       
         Initialize(GameBoardCubeDictionary.END_ZONE, ending);
         Initialize(GameBoardCubeDictionary.LEMMING, lemming);
         Initialize(GameBoardCubeDictionary.LEMMING_LIVE, lemmingLive);
         Initialize(GameBoardCubeDictionary.LEMMING_DEAD, lemmingDead);
+        Initialize(GameBoardCubeDictionary.LEMMING_PHASED, lemmingPhased);
+
+        Initialize(GameBoardCubeDictionary.MOVE_CUBE, moveCube);
+        Initialize(GameBoardCubeDictionary.WORMHOLE_IN, wormholeIn);
+        Initialize(GameBoardCubeDictionary.WORMHOLE_OUT, wormholeOut);
     }
 
     public GameObject GetObject(char key)

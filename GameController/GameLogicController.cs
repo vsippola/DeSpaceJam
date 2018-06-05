@@ -31,34 +31,50 @@ public class GameLogicController : MonoBehaviour
 
         if (updateTimer > 0) return;
 
-        updateTimer = timeBetweenUpdates;
+        //updateTimer = timeBetweenUpdates;
         CheckBuilding();
 	}
 
     private void CheckBuilding()
     {
-        //if (!Input.GetKeyDown(KeyCode.N)) return;
+        if (!Input.GetKeyDown(KeyCode.N)) return;
 
         bool changed = false;
 
-        //Find next map to update. (for not just go linearly)
-        List<LevelMoment> timeline = levelData.moments.Last<List<LevelMoment>>();
-        LevelMoment prevMoment = timeline.Last<LevelMoment>().DeepCopyLevelMoment();
+        //Find next map to update. (for not just go linearly)        
+        LevelMoment prevMoment = FindOldMoment();
+        if (prevMoment == null)
+        {
+            updating = false;
+            return;
+        }
         LevelMoment nextMoment = prevMoment.DeepCopyLevelMoment();
 
-        //do wormhole logic later?
+        nextMoment.Age();
+        nextMoment.RecieveTimeTraveler();
 
         List<Lemming> curLemming = new List<Lemming>();
         //Keep track of saved and dead lemming count
         Vector2Int lemCounts = new Vector2Int(nextMoment.savedLemmings.Count, nextMoment.deadLemmings.Count);
+
         //Go one past the last moment
-        if ((lemCounts.x > 0) || (lemCounts.y > 0)) changed = true;
-        nextMoment.lemmingCount += lemCounts;
+        if ((lemCounts.x > 0) || (lemCounts.y > 0))
+        {
+            changed = true;
+        }
+        
+
+        nextMoment.goal -= lemCounts.x;
+        nextMoment.fail -= lemCounts.y;        
+
         nextMoment.savedLemmings = new List<Lemming>();
         nextMoment.deadLemmings = new List<Lemming>();
 
+        List<Lemming> movingLemmings = new List<Lemming>();
+        movingLemmings.AddRange(nextMoment.lemmings);
+        movingLemmings.AddRange(nextMoment.phasedLemmings);
 
-        foreach (Lemming lem in nextMoment.lemmings)
+        foreach (Lemming lem in movingLemmings)
         {
             Vector3Int pos = lem.position;
 
@@ -82,36 +98,52 @@ public class GameLogicController : MonoBehaviour
             current.exitMoveBehaviour.Move(nextMoment, lem, below);
 
             GameBlock onBlock = GetBlock(nextMoment, lem.position);
-
+         
             if (onBlock.key == GameBoardCubeDictionary.END_ZONE)
             {
-                nextMoment.savedLemmings.Add(lem);
+                //Time travelers don't go to heaven
+                if (nextMoment.LemmingInPhase(lem)) nextMoment.savedLemmings.Add(lem);
             }
             else if( CheckDead(lem) )
             {
-                nextMoment.deadLemmings.Add(lem);
+                if (nextMoment.LemmingInPhase(lem)) nextMoment.deadLemmings.Add(lem);
             }
             else
             {
-                curLemming.Add(lem);
+                if (nextMoment.LemmingInPhase(lem)) curLemming.Add(lem);
+                else nextMoment.phasedLemmings.Add(lem);
             }
 
         }
+
+        Debug.Log(levelData.moments.Count);
 
         if(changed)
         {
             nextMoment.lemmings = curLemming;
+            if (nextMoment.timeTraveler != null) nextMoment.lemmings.Remove(nextMoment.timeTraveler);
         }
 
         //If a new moment was created, add it to the timeline, call event
-        if (changed && (MomentBuiltEvent != null))
+        
+        if ((MomentBuiltEvent != null))
         {
+            List<LevelMoment> timeline = levelData.moments[nextMoment.phase];
             int i = timeline.Count;
             timeline.Add(nextMoment);
             MomentBuiltEvent(new Vector2Int(0,i));
         }
+    }
 
-        updating = changed;
+    private LevelMoment FindOldMoment()
+    {
+        foreach(List<LevelMoment> timeline in levelData.moments)
+        {
+            LevelMoment terminalMoment = timeline[timeline.Count - 1];
+            if (terminalMoment.CanChange()) return terminalMoment;
+        }
+
+        return null;
     }
 
     private bool CheckDead(Lemming lem)
@@ -161,7 +193,7 @@ public class GameLogicController : MonoBehaviour
             return blockBuilder.Build(GameBoardCubeDictionary.NORMAL_CUBE, pos);
         }
 
-        GameBlock result = blockBuilder.Build(moment.level[pos.x, pos.y, pos.z], pos);
+        GameBlock result = blockBuilder.Build(moment.CharAt(pos), pos);
         return result;
     }
 }
