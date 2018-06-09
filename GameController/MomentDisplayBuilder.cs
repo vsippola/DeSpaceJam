@@ -40,8 +40,12 @@ public class MomentDisplayBuilder
             {
                 for (int i = 0; i < x; i++)
                 {
+                    char key = moment.level[i, j, k];
 
-                    GameObject newObject = GetObject(moment.level[i, j, k]);
+                    if (key == GameBoardCubeDictionary.OPEN_SPACE) continue;
+                    if (key == GameBoardCubeDictionary.OPEN_CUBE) continue;
+
+                    GameObject newObject = GetObject(key);
 
                     if (newObject == null) continue;
 
@@ -56,10 +60,35 @@ public class MomentDisplayBuilder
         PlaceLemmings(GameBoardCubeDictionary.LEMMING_LIVE, moment.savedLemmings);
         PlaceLemmings(GameBoardCubeDictionary.LEMMING_DEAD, moment.deadLemmings);
         PlaceLemmings(GameBoardCubeDictionary.LEMMING_PHASED, moment.phasedLemmings);
+        PlaceSpawners(GameBoardCubeDictionary.SPAWNER, moment.spawners);
 
         if (moment.HasTimeTraveler()) PlaceLemming(GameBoardCubeDictionary.LEMMING, moment.timeTraveler);
 
         built = true;
+    }
+
+    private void PlaceSpawners(char key, List<Spawner> spawners)
+    {
+        foreach(Spawner spawn in spawners)
+        {
+            GameObject newObject = GetObject(key);
+
+            if (newObject == null) return;
+
+            Vector3Int pos = spawn.position;
+            newObject.SetActive(true);
+
+            newObject.transform.localPosition = new Vector3(pos.x, pos.y, pos.z);
+
+            Vector3 angles = new Vector3(0f, 90f, 0f);
+            float turn = 0f;
+            if (spawn.direction.z == -1) turn = 1;
+            else if (spawn.direction.x == -1) turn = 2;
+            else if (spawn.direction.z == 1) turn = 3;
+
+            newObject.transform.localEulerAngles = angles * turn;
+        }
+        
     }
 
     private void PlaceLemming(char key, Lemming lem)

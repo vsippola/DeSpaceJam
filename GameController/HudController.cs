@@ -13,6 +13,9 @@ public class HudController : MonoBehaviour
     public DeadCountUpdater deadLemCount;
     public MovecubeUpdater[] moveCubeUpdaters;
 
+    public GameLogicController logicCont;
+    public GameObject HUD;
+
     private void Start()
     {
         momentDisplayController.MomentDisplayChangeEvent += aliveLemCount.OnUpdate;
@@ -27,6 +30,8 @@ public class HudController : MonoBehaviour
         }
 
         OnRedrawHudEvent(LevelData.Instance.startingMoment);
+
+        logicCont.GameWinEvent += OnWin;
     }
 
     public void RedrawHud(LevelMoment moment)
@@ -35,5 +40,9 @@ public class HudController : MonoBehaviour
         if (OnRedrawHudEvent != null) OnRedrawHudEvent(moment);
     }
 
-
+    private void OnWin()
+    {
+        HUD.SetActive(false);
+        enabled = false;
+    }
 }

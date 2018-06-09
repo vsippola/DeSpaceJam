@@ -34,8 +34,16 @@ public class MoveableButtonPressController : MonoBehaviour
     {
         if (text.text == "0") return;
 
-        removeItemController.Disable();
-        placeItemController.key = this.key;
-        placeItemController.enabled = true;        
+        if(placeItemController.key == key)
+        {
+            removeItemController.enabled = true;
+            placeItemController.DisableController();
+        }
+        else
+        {
+            removeItemController.Disable();
+            placeItemController.SetKey(key);
+            placeItemController.enabled = true;
+        } 
     }
 }

@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class MoveBehaviour : MoveBehaviourAbstract
 {
-    public override void Move(LevelMoment data, Lemming lemming, GameBlock block)
+    public override void Move(LevelMoment next, LevelMoment prev, Lemming lemming, GameBlock block)
     {
     }
 }

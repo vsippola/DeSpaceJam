@@ -7,13 +7,24 @@ public class GameLogicController : MonoBehaviour
     public delegate void MomentBuilt(Vector2Int i);
     public event MomentBuilt MomentBuiltEvent;
 
+    public delegate void OnGameWinEvent();
+    public event OnGameWinEvent GameWinEvent;
+
     private LevelData levelData;
+
+    public bool isWin = false;
+    public Vector2Int winIndex;
 
     public bool updating;
 
     [Range(0f, 10f)]
     public float timeBetweenUpdates;
-    private float updateTimer;    
+    private float updateTimer;
+
+    [Range(1f, 10f)]
+    public float winCheckDelay = 5f;
+
+    private float startDelay = 2f;
 
     private void Awake()
     {
@@ -25,8 +36,14 @@ public class GameLogicController : MonoBehaviour
 	
 	void Update ()
     {
+        if (isWin) return;
+        winCheckDelay -= Time.deltaTime;
+        CheckWin();
+
         if (!updating) return;
 
+        startDelay -= Time.deltaTime;
+        if (startDelay > 0) return;
         updateTimer -= Time.deltaTime;
 
         if (updateTimer > 0) return;
@@ -37,8 +54,9 @@ public class GameLogicController : MonoBehaviour
 
     private void CheckBuilding()
     {
-        //if (!Input.GetKeyDown(KeyCode.N)) return;
+        //if (!Input.GetKeyDown(KeyCode.N)) return;        
 
+        if (isWin) return;
         bool changed = false;
 
         //Find next map to update. (for not just go linearly)        
@@ -55,7 +73,6 @@ public class GameLogicController : MonoBehaviour
 
         nextMoment.Age();
 
-        List<Lemming> curLemming = new List<Lemming>();
         //Keep track of saved and dead lemming count
         Vector2Int lemCounts = new Vector2Int(nextMoment.savedLemmings.Count, nextMoment.deadLemmings.Count);
 
@@ -72,6 +89,7 @@ public class GameLogicController : MonoBehaviour
         movingLemmings.AddRange(nextMoment.lemmings);
         movingLemmings.AddRange(nextMoment.phasedLemmings);
 
+        nextMoment.lemmings = new List<Lemming>();
         nextMoment.savedLemmings = new List<Lemming>();
         nextMoment.deadLemmings = new List<Lemming>();
         nextMoment.phasedLemmings = new List<Lemming>();
@@ -93,20 +111,20 @@ public class GameLogicController : MonoBehaviour
 
             changed |= true;
 
-            move = GetMoveBlock(prevMoment, forwardIndex, belowIndex);
+            move = GetBlock(prevMoment, forwardIndex);
             below = GetBlock(prevMoment, belowIndex);
-            
-            if(move != null) move.enterMoveBehaviour.Move(nextMoment, lem, move);
-            if(below != null) below.overMoveBehaviour.Move(nextMoment, lem, below);
-            current.exitMoveBehaviour.Move(nextMoment, lem, below);
+
+            Vector3Int prevPos = lem.position;
+            if(below != null) below.overMoveBehaviour.Move(nextMoment, prevMoment, lem, below);
+            if((move != null)&&(prevPos == lem.position)) move.enterMoveBehaviour.Move(nextMoment, prevMoment, lem, move);
+            current.exitMoveBehaviour.Move(nextMoment, prevMoment, lem, below);
 
             Vector3Int lPos = lem.position; ;
-            char key = nextMoment.level[lPos.x, lPos.y, lPos.z];
-         
+            char key = nextMoment.level[lPos.x, lPos.y, lPos.z];           
+
             if (key == GameBoardCubeDictionary.END_ZONE)
             {
-                //Time travelers don't go to heaven
-                if (nextMoment.LemmingInPhase(lem)) nextMoment.savedLemmings.Add(lem);
+                nextMoment.savedLemmings.Add(lem);
             }
             else if( CheckDead(lem) )
             {
@@ -114,7 +132,7 @@ public class GameLogicController : MonoBehaviour
             }
             else
             {
-                if (nextMoment.LemmingInPhase(lem)) curLemming.Add(lem);
+                if (nextMoment.LemmingInPhase(lem)) nextMoment.lemmings.Add(lem);
                 else nextMoment.phasedLemmings.Add(lem);
             }
 
@@ -122,11 +140,11 @@ public class GameLogicController : MonoBehaviour
 
         if(changed)
         {
-            nextMoment.lemmings = curLemming;
             if (nextMoment.HasTimeTraveler()) nextMoment.lemmings.Remove(nextMoment.timeTraveler);
            
         }
 
+        ProcessSpawners(nextMoment);
         nextMoment.RecieveTimeTraveler();
 
         LevelData.Instance.CheckPast(nextMoment);
@@ -139,7 +157,61 @@ public class GameLogicController : MonoBehaviour
             Vector2Int i = new Vector2Int(nextMoment.phase, nextMoment.time);
             timeline.Add(nextMoment);
             MomentBuiltEvent(i);
+        }        
+    }
+
+    private void CheckWin()
+    {
+
+        if (winCheckDelay > 0) return;
+
+        List<List<LevelMoment>> moments = LevelData.Instance.moments;
+        for (int j = 0; j < moments.Count; j++)
+        {
+            int i = moments[j].Count - 1;
+            bool check = moments[j][i].IsWin();
+
+            if (check)
+            {                
+                while( (i > 1) && (moments[j][i-1].IsWin()))
+                {
+                    i--;
+                }
+
+                string newPath = SingletonJsonLoadable<ConfigurationLevelDataPair>.Instance.data.nextLevelPath;
+                SingletonJsonLoadable<DataGameDataPairs>.Instance.data.lastLevel = newPath;
+                SingletonJsonLoadable<DataGameDataPairs>.Instance.Save();
+
+                GameObject obj = GameObject.FindGameObjectWithTag("TransitionData");
+                obj.GetComponentInChildren<DataTransition>().nextLevelPath = newPath;
+
+                isWin = true;
+                winIndex = new Vector2Int(i, j);
+                if (GameWinEvent != null) GameWinEvent();
+                return;
+            }
         }
+    }
+
+    private bool ProcessSpawners(LevelMoment mom)
+    {
+        bool result = false;
+
+        List<Spawner> spawners = new List<Spawner>();
+        spawners.AddRange(mom.spawners);
+
+        foreach(Spawner spawn in spawners)
+        {
+            spawn.age--;
+
+            if (spawn.age == 0) mom.spawners.Remove(spawn);
+            if (spawn.age % 2 != 0) continue;
+
+            Lemming lem = spawn.MakeLemming();
+            if (mom.IsFree(lem.position)) mom.lemmings.Add(lem);
+        }
+
+        return result;
     }
 
     private LevelMoment FindOldMoment()
@@ -147,7 +219,14 @@ public class GameLogicController : MonoBehaviour
         foreach(List<LevelMoment> timeline in levelData.moments)
         {
             LevelMoment terminalMoment = timeline[timeline.Count - 1];
-            if (terminalMoment.CanChange()) return terminalMoment;
+            if (terminalMoment.CanChange())
+            {
+                if((terminalMoment.time == 0)&&(terminalMoment.phase > 0))
+                {
+                    terminalMoment.RecieveTimeTraveler();
+                }
+                return terminalMoment;
+            }
         }
 
         return null;
@@ -159,7 +238,7 @@ public class GameLogicController : MonoBehaviour
         if (lem.position.y == 0) return true;
 
         //If lemming is 25 seconds old it dies
-        if (lem.age-- == 0) return true;
+        if (lem.age-- <= 0) return true;
 
         return false;
     }
@@ -181,6 +260,7 @@ public class GameLogicController : MonoBehaviour
 
         //Check below for 
         result = GetBlock(moment, dPos);
+
 
         if (!(result.enterMoveBehaviour is BlockedIntoMoveBehaviour)) return result;
 

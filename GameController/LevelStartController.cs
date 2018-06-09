@@ -3,20 +3,16 @@ using System.Collections.Generic;
 
 public class LevelStartController : MonoBehaviour {
 
-    private void Awake()
-    {
-        InitializeSingletons();
-    }
-
     void Start ()
     {       
         SetupCamera();
         SetupApplicationSettings();
 
     }
+
     private void InitializeSingletons()
     {
-        LevelData instance = LevelData.Instance;        
+        LevelData instance = LevelData.Instance;                
     }
 
     private void SetupApplicationSettings()

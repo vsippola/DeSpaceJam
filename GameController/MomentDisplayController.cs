@@ -1,6 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MomentDisplayController : MonoBehaviour
 {
@@ -27,11 +27,88 @@ public class MomentDisplayController : MonoBehaviour
     private Vector2 arrowKeyTimer = Vector2.zero;
     public bool scrolling = false;
 
+    private bool done = false;
+    private bool targeting = false;
+
+    public GameLogicController logicCont;
+    public Button targetBtn;
+
+    private float targetDelay = .5f;
+    private float targetTimer = .5f;
+
+    private void Start()
+    {
+        logicCont.GameWinEvent += OnWin;
+        targetBtn.onClick.AddListener(() => StartTargeting());
+    }
+
     private void Update()
     {
-        if (checkInput) CheckMouseInput();
-        CheckKeyboardInput();
         ProcessDisplayChanges();
+        if (targeting)
+        {
+            TargetWinner();
+            return;
+        }       
+        if (checkInput) CheckMouseInput();
+        
+        CheckKeyboardInput();        
+    }
+
+    private void TargetWinner()
+    {
+        if (!targeting || !done) return;
+
+        
+        targetTimer -= Time.deltaTime;
+      
+        if (targetTimer > 0) return;
+        targetTimer = targetDelay;
+
+        Vector2Int target = logicCont.winIndex;
+        Vector2Int curIndex = displayObjects.centerIndex;
+
+        if (target.y != curIndex.y)
+        {
+            if(target.y > curIndex.y)
+            {
+                Shift(true, false);
+            }
+            else
+            {
+                Shift(true, true);
+            }
+            return;
+        }
+        else if (target.x != curIndex.x)
+        {            
+            if (target.x > curIndex.x)
+            {
+                Shift(false, false);
+            }
+            else
+            {
+                Shift(false, true);
+            }
+            return;
+        }
+
+        targeting = false;
+    }
+
+    private void StartTargeting()
+    {
+        if (targeting) return;
+        if (!done) return;
+
+        targeting = true;
+    }
+
+    private void OnWin()
+    {
+        
+        logicCont.GameWinEvent -= OnWin;
+        done = true;
     }
 
     private void CheckMouseInput()
@@ -80,9 +157,24 @@ public class MomentDisplayController : MonoBehaviour
                 if (scrolling) arrowKeyTimer.x /= 3;
             }
         }
+        else if (Input.GetKeyDown(KeyCode.PageUp))
+        {
+            changed = true;
+            for (int i = 0; i < 10; i++)
+            {
+                Shift(false, false);
+            }
+        }
+        else if(Input.GetKeyDown(KeyCode.PageDown))
+        {
+            changed = true;
+            for (int i = 0; i < 10; i++)
+            {
+                Shift(false, true);
+            }
+        }
 
-                  
-        if (input.y != -0)
+        if (input.y != 0)
         {
             changed = scrolling;
 
@@ -258,7 +350,8 @@ public class MomentDisplayController : MonoBehaviour
         }
 
         Quaternion newRotation = Quaternion.Euler(transform.localEulerAngles.x, data.targetRotation, transform.localEulerAngles.z);
-
-        transform.localRotation = Quaternion.Lerp(transform.rotation, newRotation, Time.deltaTime * rotationSmoothing);
+        float rotationSpeed = Time.deltaTime * rotationSmoothing;
+        rotationSpeed *= ( (SingletonJsonLoadable<SettingsGameDataPairs>.Instance.data.rotateSpeed + 50) / 100);
+        transform.localRotation = Quaternion.Lerp(transform.rotation, newRotation, rotationSpeed);
     }
 }

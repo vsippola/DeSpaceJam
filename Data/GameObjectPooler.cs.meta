@@ -3,7 +3,22 @@ guid: 25060e4af4b293147af0a6be243d9299
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - parent: {instanceID: 0}
+  - normalCube: {fileID: 1363299519569846, guid: d06aa0f7326141e4797b531f82e3c478,
+      type: 2}
+  - moveCube: {instanceID: 0}
+  - ending: {instanceID: 0}
+  - lemming: {instanceID: 0}
+  - lemmingLive: {instanceID: 0}
+  - lemmingDead: {instanceID: 0}
+  - lemmingPhased: {instanceID: 0}
+  - wormholeIn: {instanceID: 0}
+  - wormholeOut: {instanceID: 0}
+  - vanishCube1: {instanceID: 0}
+  - vanishCube2: {instanceID: 0}
+  - vanishCube3: {instanceID: 0}
+  - deathCube: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

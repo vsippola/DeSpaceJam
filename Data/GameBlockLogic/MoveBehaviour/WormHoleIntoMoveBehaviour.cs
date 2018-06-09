@@ -7,14 +7,15 @@ using UnityEngine;
 
 class WormHoleIntoMoveBehaviour : MoveBehaviour
 {
-    public override void Move(LevelMoment data, Lemming lemming, GameBlock block)
+    public override void Move(LevelMoment next, LevelMoment prev, Lemming lemming, GameBlock block)
     {
         lemming.position = block.pos;
 
-        LevelData.Instance.WormHole(data);
-        data.timeTraveler = lemming;
-        data.lemmings.Remove(lemming);
-        data.fail--;
+        LevelData.Instance.WormHole(next);
+        next.timeTraveler = lemming;
+        next.lemmings.Remove(lemming);
+        next.phasedLemmings.Remove(lemming);
+        next.fail--;
     }
 }
 

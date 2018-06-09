@@ -36,7 +36,12 @@ public class PlaceItemController : MonoBehaviour
 
     private void OnEnable()
     {
-        if(tempObj != null)
+        UpdateObject();
+    }
+
+    private void UpdateObject()
+    {
+        if (tempObj != null)
         {
             tempObj.layer = LayerMask.NameToLayer("Default");
             pool.ReturnObject(oldKey, tempObj);
@@ -128,8 +133,15 @@ public class PlaceItemController : MonoBehaviour
         DisableController();
     }
 
-    private void DisableController()
+    public void SetKey(char key)
     {
+        this.key = key;
+        UpdateObject();
+    }
+
+    public void DisableController()
+    {
+        key = '\0';
         tempObj.SetActive(false);
         this.enabled = false;
     }

@@ -22,11 +22,15 @@ public class RemoveItemController : MonoBehaviour
     GameObject highlight;
     Transform displayTrans;
 
+    public GameLogicController logicCont;
+
     private void Start()
     {
         ResetOverI();
         highlight = Instantiate(highlightObject);
         displayTrans = highlight.transform;
+
+        logicCont.GameWinEvent += OnWin;
     }
 
     void Update()
@@ -38,6 +42,12 @@ public class RemoveItemController : MonoBehaviour
 
         CheckDisplayUpdate();
         CheckPlacement();
+    }
+
+    private void OnWin()
+    {
+        logicCont.GameWinEvent -= OnWin;
+        enabled = false;
     }
 
     private void OnEnable()

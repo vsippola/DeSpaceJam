@@ -25,25 +25,27 @@ class GameBlockBuilder
         switch (key)
         {
             case GameBoardCubeDictionary.NORMAL_CUBE:
-                {
-                    return new BlockedIntoMoveBehaviour();
-                }
-            case GameBoardCubeDictionary.MOVE_CUBE:
+            case GameBoardCubeDictionary.MOVE_CUBE:            
+            case GameBoardCubeDictionary.OPEN_SPACE:            
                 {
                     return new BlockedIntoMoveBehaviour();
                 }
             case GameBoardCubeDictionary.LEMMING:
-                {
-                    return new BlockedIntoMoveBehaviour();
-                }
             case GameBoardCubeDictionary.LEMMING_PHASED:
                 {
-                    return new BlockedIntoMoveBehaviour();
+                    return new MovingIntoMoveBehaviour();
                 }
             case GameBoardCubeDictionary.WORMHOLE_IN:
                 {
                     return new WormHoleIntoMoveBehaviour();
                 }
+            case GameBoardCubeDictionary.VANISH_CUBE1:
+            case GameBoardCubeDictionary.VANISH_CUBE2:
+            case GameBoardCubeDictionary.VANISH_CUBE3:
+                {                   
+                    return new IntoVanishMoveBehaviour(key);
+                }
+            case GameBoardCubeDictionary.OPEN_CUBE:
             default:
                 {
                     return new IntoMoveBehaviour();
@@ -66,6 +68,19 @@ class GameBlockBuilder
     {
         switch (key)
         {
+            case GameBoardCubeDictionary.VANISH_CUBE1:
+            case GameBoardCubeDictionary.VANISH_CUBE2:
+            case GameBoardCubeDictionary.VANISH_CUBE3:
+                {
+                    return new OverVanishMoveBehaviour(key);
+                }
+            case GameBoardCubeDictionary.OPEN_SPACE:
+            case GameBoardCubeDictionary.DEATH_CUBE:
+            case GameBoardCubeDictionary.OPEN_CUBE:
+            case GameBoardCubeDictionary.NEGA_CUBE:
+                {
+                    return new IntoMoveBehaviour();
+                }
             default:
                 {
                     return new MoveBehaviour();

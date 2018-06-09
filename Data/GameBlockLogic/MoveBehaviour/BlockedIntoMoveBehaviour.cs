@@ -7,7 +7,7 @@ using UnityEngine;
 
 class BlockedIntoMoveBehaviour : MoveBehaviour
 {
-    public override void Move(LevelMoment data, Lemming lemming, GameBlock block)
+    public override void Move(LevelMoment next, LevelMoment prev, Lemming lemming, GameBlock block)
     {
         lemming.Turn();
     }

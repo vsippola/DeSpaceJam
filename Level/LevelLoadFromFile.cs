@@ -6,8 +6,9 @@ using System.Collections.Generic;
 
 public class LevelLoadFromFile
 {
-    private static string gameDataProjectFilePath = "/StreamingAssets/LevelData/";
+    private static readonly string gameDataProjectFilePath = "/StreamingAssets/LevelData/";
 
+    /*
     public static LevelMoment LoadFromFile(string file)
     {
         LevelMoment result;
@@ -17,7 +18,6 @@ public class LevelLoadFromFile
         //Attempt to load json data from file.
         if (File.Exists(filePath))
         {
-            Debug.Log("File: " + filePath + " exists. Attempting to parse.");
             string dataAsJson = File.ReadAllText(filePath);
             try
             {
@@ -35,18 +35,12 @@ public class LevelLoadFromFile
             return null;
         }
 
-        Debug.Log(result.x + ", " + result.y + ", " + result.z);
-        Debug.Log(result.levelAsString);
-        Debug.Log(JsonUtility.ToJson(result));
-
         result.BuildLevel();
 
         result.LogLevel();
 
-        //Load spawner location/capacity/frequency/queue (later)
-
         return result;
-    }
+    }*/
 
 }
 

@@ -10,22 +10,45 @@ public class LevelData
     private static LevelData instance = null;
     private static readonly object padlock = new object();
 
-    public string levelName = "level0";
-    public string levelPath = "level0.json";
-
     public LevelMoment startingMoment;
     public List<List<LevelMoment>> moments;
 
     private MomentDisplay momentDisplay;
+    private static DataTransition transData;
+
+    private SingletonJsonLoadable<ConfigurationLevelDataPair> levelConfig;
 
     private LevelData()
     {
-        startingMoment = LevelLoadFromFile.LoadFromFile(levelPath);
+              
+    }
+
+    public void LoadData()
+    {
+        if (transData == null)
+        {
+            GameObject obj = GameObject.FindGameObjectWithTag("TransitionData");
+            transData = obj.GetComponentInChildren<DataTransition>();
+        }
+
+        if (levelConfig == null)
+        {
+            levelConfig = SingletonJsonLoadable<ConfigurationLevelDataPair>.Instance;
+        }
+
+        levelConfig.Configure("LevelData/" + transData.nextLevelPath, "LevelData/" + transData.nextLevelPath);
+        levelConfig.Load();
+
+        startingMoment = levelConfig.data.startingMoment;
+        startingMoment.BuildLevel(levelConfig.data.levelAsString);
+
         moments = new List<List<LevelMoment>>();
 
-        List<LevelMoment> startingTimeline = new List<LevelMoment>();
-        startingTimeline.Add(startingMoment.DeepCopyLevelMoment());
-        moments.Add(startingTimeline);        
+        List<LevelMoment> startingTimeline = new List<LevelMoment>
+        {
+            startingMoment.DeepCopyLevelMoment()
+        };
+        moments.Add(startingTimeline);
     }
 
     public static LevelData Instance
@@ -78,11 +101,12 @@ public class LevelData
         List<LevelMoment> present = moments[p];
         List<LevelMoment> past = moments[p - 1];
 
-        if (present.Count < past.Count) return;
+        if (present.Count <= past.Count) return;
 
         LevelMoment terminalMoment = past[past.Count - 1];
 
-        for (int i = past.Count; i <= present.Count; i++)
+        int k = Mathf.Abs(present.Count - past.Count);
+        for (int i = 0; i < k; i++)
         {          
             past.Add(terminalMoment);
         }
@@ -114,10 +138,25 @@ public class LevelData
             LevelMoment prevStart = LevelData.Instance.startingMoment;
             LevelMoment newStart = prevStart.DeepCopyLevelMoment();
 
-            newStart.phase++;
+            newStart.phase = i.x + 1;
 
             newStart.PhaseInLemmings();
     
+            for(int l = 0; l < newStart.y; l++)
+            {
+                for(int k = 0; k < newStart.z; k++)
+                {
+                    for(int m = 0; m < newStart.x; m++)
+                    {
+                        char key = newStart.level[m, l, k];
+                        if(key == GameBoardCubeDictionary.WORMHOLE_IN)
+                        {
+                            newStart.Remove(new Vector3Int(m, l, k), key);
+                        }
+                    }
+                }
+            }
+
             newStart.RecieveTimeTraveler();
             timeline.Add(newStart);
 

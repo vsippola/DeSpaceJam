@@ -34,10 +34,9 @@ public class LevelMoment
     //Variables
 
     public int x, y, z;
-    public string levelAsString;
     public List<MoveTuple> moveObj = new List<MoveTuple>();
 
-    public string[] spawners;
+    public List<Spawner> spawners = new List<Spawner>();
     public List<Lemming> lemmings = new List<Lemming>();
     public List<Lemming> savedLemmings = new List<Lemming>();
     public List<Lemming> deadLemmings = new List<Lemming>();
@@ -57,12 +56,12 @@ public class LevelMoment
 
     public int terminalBuffer = 3;
 
-    public void BuildLevel()
+    public void BuildLevel(string levelAsString)
     {
         wormholeOutPos.x = -1;
         LevelConsistencyCheck();
 
-        LevelAsStringToArray();
+        LevelAsStringToArray(levelAsString);
         BuildMoveables();
     }
 
@@ -75,22 +74,46 @@ public class LevelMoment
         }
     }
 
-    private void LevelAsStringToArray()
+    private void LevelAsStringToArray(string levelAsString)
     {
+        y++;
         level = new char[x, y, z];
+
+        for (int k = 0; k < z; k++)
+        {
+            for (int i = 0; i < x; i++)
+            {
+ 
+                level[i, 0, k] = GameBoardCubeDictionary.DEATH_CUBE;
+
+            }
+        }
 
         int currentIndex = 0;
         char currentChar;
 
-        for (int j = 0; j < y; j++)
+        for (int j = 1; j < y; j++)
         {
             for (int k = 0; k < z; k++)
             {
                 for (int i = 0; i < x; i++)
                 {
                     //load next char, load a blank square if the string is too short for the given bounds
+                    while ((currentIndex < levelAsString.Length) && (levelAsString[currentIndex] == ' ')) currentIndex++;
+
                     if (currentIndex < levelAsString.Length) currentChar = levelAsString[currentIndex++];
                     else currentChar = DEFAULT_CHAR;
+
+                    if((j > 1))
+                    {
+                        if(currentChar == GameBoardCubeDictionary.OPEN_SPACE)
+                        {
+                            if (level[i, j - 1, k] != GameBoardCubeDictionary.OPEN_SPACE)
+                            {
+                                currentChar = GameBoardCubeDictionary.OPEN_CUBE;
+                            }
+                        }                        
+                    }
 
                     level[i, j, k] = currentChar;
 
@@ -103,15 +126,7 @@ public class LevelMoment
 
     private void LevelConsistencyCheck()
     {
-        int size = x * y * z;
 
-        if (size != levelAsString.Length)
-        {
-            Debug.Log("Warning level size (" + size + ") does not match level string length (" + levelAsString.Length + ")");
-
-            if (size < levelAsString.Length) Debug.Log("Truncating level string");
-            else Debug.Log("Padding level with " + DEFAULT_CHAR + " = blank square");
-        }
     }
 
     public LevelMoment DeepCopyLevelMoment()
@@ -159,6 +174,11 @@ public class LevelMoment
             copy.phasedLemmings.Add(lem.DeepCopy());
         }
 
+        foreach (Spawner spawn in spawners)
+        {
+            copy.spawners.Add(spawn.DeepCopy());
+        }
+
         return copy;
     }
 
@@ -171,16 +191,16 @@ public class LevelMoment
         }
 
         string log = "";
-        for (int k = 0; k < z; k++)
+        for (int k = 0; k < y; k++)
         {
             log += "Level " + k + "\n";
 
             string xySlice = "";
-            for (int j = 0; j < y; j++)
+            for (int j = 0; j < z; j++)
             {
                 for (int i = 0; i < x; i++)
                 {
-                    xySlice += level[i, j, k];
+                    xySlice += level[i, k, j];
                 }
 
                 xySlice += "\n";
@@ -225,7 +245,7 @@ public class LevelMoment
 
     public bool IsFree(Vector3Int i)
     {
-        return (CharAt(i) == GameBoardCubeDictionary.OPEN_SPACE);
+        return (CharAt(i) == GameBoardCubeDictionary.OPEN_CUBE);
     }
 
     public bool Change(Vector3Int i, char key)
@@ -242,10 +262,13 @@ public class LevelMoment
 
     public bool Remove(Vector3Int i, char key)
     {
-        if (!moveables.ContainsKey(key)) return false;
+        if (!moveables.ContainsKey(key))
+        {
+            moveables.Add(key, 0);
+        }
         if (level[i.x, i.y, i.z] != key) return false;
 
-        level[i.x, i.y, i.z] = GameBoardCubeDictionary.OPEN_SPACE;
+        level[i.x, i.y, i.z] = GameBoardCubeDictionary.OPEN_CUBE;
         moveables[key]++;
 
         return true;
@@ -295,6 +318,11 @@ public class LevelMoment
         {
             lem.phase = this.phase;
         }
+
+        foreach(Spawner spawn in spawners)
+        {
+            spawn.phase = this.phase;
+        }
     }
 
     public void RecieveTimeTraveler()
@@ -316,7 +344,14 @@ public class LevelMoment
     public bool CanChange()
     {
         if ((lemmings.Count > 0) || (phasedLemmings.Count > 0)) return true;
- 
+        if (spawners.Count > 0) return true;
+
+        if(phase > 0)
+        {
+            List<LevelMoment> prevTimeline = LevelData.Instance.moments[phase - 1];
+            if (time < (prevTimeline.Count - 1)) return true;
+        }
+
         if (terminalBuffer > 0)
         {
             terminalBuffer--;

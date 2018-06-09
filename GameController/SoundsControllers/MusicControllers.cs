@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-
-
 public class MusicControllers : MonoBehaviour
 {
     [Range(-3f, 1f)]
@@ -17,16 +15,16 @@ public class MusicControllers : MonoBehaviour
 
     public MomentDisplayController displayController;
 
-    AudioSource music;
+    private AudioSource music;
     private readonly float defaultSpeed = 1f;
     Queue<float> targets;
 
 	void Start ()
     {
-        music = transform.GetComponent<AudioSource>();
+        music = transform.GetComponentInChildren<AudioSource>();
         targets = new Queue<float>();
 
-        displayController.MomentDisplayChangeEvent += OnMove;
+        if(displayController != null) displayController.MomentDisplayChangeEvent += OnMove;
     }
 	
 	// Update is called once per frame
